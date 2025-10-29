@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
 import InstallPrompt from '@/components/InstallPrompt';
+import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 
 interface Command {
   id: string;
@@ -27,10 +28,52 @@ const commands: Command[] = [
 
 const Index = () => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [voiceInput, setVoiceInput] = useState('');
-  const [isListening, setIsListening] = useState(false);
   const [characterName, setCharacterName] = useState('Аи-тян');
   const [showCustomize, setShowCustomize] = useState(false);
+  const { isListening, transcript, isSupported, startListening, stopListening, resetTranscript } = useSpeechRecognition();
+
+  const processCommand = (text: string) => {
+    const lowerText = text.toLowerCase();
+    
+    if (lowerText.includes('напоминание') || lowerText.includes('напомни')) {
+      return commands.find(c => c.id === 'reminder');
+    } else if (lowerText.includes('музык') || lowerText.includes('песн')) {
+      return commands.find(c => c.id === 'music');
+    } else if (lowerText.includes('браузер') || lowerText.includes('интернет') || lowerText.includes('сайт')) {
+      return commands.find(c => c.id === 'browser');
+    } else if (lowerText.includes('файл') || lowerText.includes('папк')) {
+      return commands.find(c => c.id === 'files');
+    } else if (lowerText.includes('программ') || lowerText.includes('приложен')) {
+      return commands.find(c => c.id === 'apps');
+    } else if (lowerText.includes('громкость') || lowerText.includes('звук')) {
+      return commands.find(c => c.id === 'volume');
+    } else if (lowerText.includes('яркость') || lowerText.includes('экран')) {
+      return commands.find(c => c.id === 'brightness');
+    } else if (lowerText.includes('питание') || lowerText.includes('выключ') || lowerText.includes('спящ')) {
+      return commands.find(c => c.id === 'power');
+    }
+    
+    return null;
+  };
+
+  useEffect(() => {
+    if (transcript && !isListening) {
+      const command = processCommand(transcript);
+      
+      if (command) {
+        handleCommand(command);
+        toast.success('Команда распознана!', {
+          description: `${command.label}: "${transcript}"`,
+        });
+      } else {
+        toast.info('Не удалось распознать команду', {
+          description: `Вы сказали: "${transcript}"`,
+        });
+      }
+      
+      setTimeout(() => resetTranscript(), 2000);
+    }
+  }, [transcript, isListening]);
 
   const handleCommand = (command: Command) => {
     toast.success(`${command.label} активирован!`, {
@@ -39,20 +82,20 @@ const Index = () => {
   };
 
   const handleVoiceCommand = () => {
-    if (!isListening) {
-      setIsListening(true);
+    if (!isSupported) {
+      toast.error('Распознавание речи не поддерживается', {
+        description: 'Попробуйте использовать Chrome или Edge',
+      });
+      return;
+    }
+
+    if (isListening) {
+      stopListening();
+    } else {
+      startListening();
       toast.info('Слушаю...', {
         description: 'Говорите команду',
       });
-      setTimeout(() => {
-        setIsListening(false);
-        if (voiceInput) {
-          toast.success('Команда получена!', {
-            description: voiceInput,
-          });
-          setVoiceInput('');
-        }
-      }, 3000);
     }
   };
 
@@ -123,11 +166,10 @@ const Index = () => {
               <div className="space-y-4">
                 <div className="flex gap-2">
                   <Input
-                    value={voiceInput}
-                    onChange={(e) => setVoiceInput(e.target.value)}
-                    placeholder="Введите команду или нажмите на микрофон..."
+                    value={transcript}
+                    readOnly
+                    placeholder={isListening ? "Говорите..." : "Нажмите на микрофон для голосового ввода"}
                     className="bg-background/50"
-                    disabled={isListening}
                   />
                   <Button
                     size="icon"
@@ -137,6 +179,12 @@ const Index = () => {
                     <Icon name={isListening ? "Mic" : "MicOff"} size={20} />
                   </Button>
                 </div>
+                
+                {!isSupported && (
+                  <div className="text-xs text-destructive bg-destructive/10 p-2 rounded">
+                    ⚠️ Распознавание речи не поддерживается. Используйте Chrome или Edge.
+                  </div>
+                )}
 
                 <div className="text-sm text-muted-foreground">
                   <p className="font-handwriting text-lg text-primary">
