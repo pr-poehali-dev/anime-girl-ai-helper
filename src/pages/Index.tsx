@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
+import InstallPrompt from '@/components/InstallPrompt';
 
 interface Command {
   id: string;
@@ -57,6 +58,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted relative overflow-hidden">
+      <InstallPrompt />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(155,135,245,0.1),transparent_50%)]" />
       
       <div className="relative z-10 container mx-auto px-4 py-8">
@@ -180,7 +182,7 @@ const Index = () => {
                 
                 <div className="space-y-4">
                   <img
-                    src="https://cdn.poehali.dev/projects/9b71de43-33e2-422b-942e-fbdc535266af/files/48b59356-3d56-466f-9f7d-e65f6cead9a8.jpg"
+                    src="https://cdn.poehali.dev/projects/9b71de43-33e2-422b-942e-fbdc535266af/files/d42bf102-d5e0-4f82-b6bb-6eba999bb4fe.jpg"
                     alt="AI Character"
                     className="w-full rounded-lg animate-float"
                   />
